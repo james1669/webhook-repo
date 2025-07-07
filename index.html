@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GitHub Webhook Events</title>
+  <title>GitHub Webhook Events</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Blank favicon to avoid cached icons -->
@@ -40,7 +40,7 @@
     th, td {
       padding: 14px 16px;
       text-align: left;
-      border: 1px solid #3a3a3a;        /* visible cell borders */
+      border: 1px solid #3a3a3a;
       font-size: 14px;
     }
 
@@ -51,13 +51,13 @@
     }
 
     /* ----------  Row accent lines ---------- */
-    tr.push  td { border-left: 4px solid #42a5f5; } /* light blue  */
-    tr.pull  td { border-left: 4px solid #fbc02d; } /* amber       */
-    tr.merge td { border-left: 4px solid #66bb6a; } /* green       */
+    tr.push  td { border-left: 4px solid #42a5f5; }
+    tr.pull  td { border-left: 4px solid #fbc02d; }
+    tr.merge td { border-left: 4px solid #66bb6a; }
 
     tr:hover { background-color: #252525; }
 
-    /* ----------  Status text (optional UX cue) ---------- */
+    /* ----------  Status text ---------- */
     #event-status {
       font-size: 12px;
       color: #999;
@@ -67,14 +67,14 @@
 </head>
 
 <body>
-  <h1>GitHub Webhook Event</h1>
+  <h1>GitHub Webhook Event</h1>
 
   <table id="events-table">
     <thead>
       <tr>
         <th>Author</th>
-        <th>From Branch</th>
-        <th>To Branch</th>
+        <th>From Branch</th>
+        <th>To Branch</th>
         <th>Action</th>
         <th>Timestamp</th>
       </tr>
@@ -82,7 +82,7 @@
     <tbody></tbody>
   </table>
 
-  <p id="event-status">Waiting for new event …</p>
+  <p id="event-status">Waiting for new event …</p>
 
   <script>
     const tableBody   = document.querySelector('#events-table tbody');
@@ -95,14 +95,14 @@
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) return;
 
-        const latest    = data[0];                // newest first (backend sorts)
+        const latest    = data[0]; // newest first
         const uniqueKey = `${latest.author}-${latest.timestamp}-${latest.action}`;
 
         if (uniqueKey !== lastSeenKey) {
           lastSeenKey = uniqueKey;
 
           const row = document.createElement('tr');
-          row.classList.add(latest.action.toLowerCase());   // push / pull / merge
+          row.classList.add(latest.action.toLowerCase());
 
           row.innerHTML = `
             <td>${latest.author}</td>
@@ -112,7 +112,7 @@
             <td>${latest.timestamp}</td>
           `;
 
-          tableBody.innerHTML = '';   // clear previous row
+          tableBody.innerHTML = '';
           tableBody.appendChild(row);
 
           statusField.textContent =
@@ -124,8 +124,8 @@
       }
     }
 
-    fetchLatestEvent();                    // initial load
-    setInterval(fetchLatestEvent, 15000);  // poll every 15 s
+    fetchLatestEvent();                   // Initial load
+    setInterval(fetchLatestEvent, 15000); // Poll every 15 sec
   </script>
 </body>
 </html>

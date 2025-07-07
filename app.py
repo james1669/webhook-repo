@@ -1,14 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from dateutil import parser
 from pymongo import MongoClient
-from flask import jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# mongo URL
-MONGO_URI = "<your-mongo-url>"
+MONGO_URI = "<your-mobgo-url>"
 client = MongoClient(MONGO_URI)
 db = client["webhookdb"]
 collection = db["events"]
@@ -17,7 +15,6 @@ collection = db["events"]
 def home():
     return "Webhook receiver is running!"
 
-#actual webhook fetch
 @app.route("/webhook", methods=["POST"])
 def webhook():
     event_type = request.headers.get("X-GitHub-Event")
@@ -28,10 +25,8 @@ def webhook():
         to_branch = payload["ref"].split("/")[-1]
         timestamp = payload["head_commit"]["timestamp"]
         message = payload["head_commit"]["message"]
-
         action = "Merge" if "merge pull request" in message.lower() else "Push"
 
-        # store in Mongo
         event = {
             "author": author,
             "from_branch": None,
@@ -48,7 +43,6 @@ def webhook():
         to_branch = payload["pull_request"]["base"]["ref"]
         timestamp = payload["pull_request"]["created_at"]
 
-        # again store in Mongo
         event = {
             "author": author,
             "from_branch": from_branch,
@@ -68,14 +62,29 @@ def format_time(timestamp):
     dt = parser.isoparse(timestamp)
     return dt.strftime("%#d %B %Y - %#I:%M %p UTC")
 
-
 @app.route("/events", methods=["GET"])
-def get_events():
-    # shows all the events sort(newest first)
-    docs = collection.find().sort("timestamp", -1)
-    result = []
+def get_all_events_sorted():
+    all_docs = list(collection.find())
+    if not all_docs:
+        return jsonify([])
 
-    for doc in docs:
+    # Parse the formatted string timestamp back to datetime
+    def parse_doc(doc):
+        try:
+            dt = parser.parse(doc["timestamp"].replace(" UTC", ""))
+            return (dt, doc)
+        except:
+            return (None, doc)
+
+    parsed_docs = [parse_doc(doc) for doc in all_docs if "timestamp" in doc]
+    parsed_docs = [p for p in parsed_docs if p[0] is not None]
+
+    # Sort by parsed datetime descending
+    parsed_docs.sort(key=lambda x: x[0], reverse=True)
+
+    # Return the full sorted list
+    result = []
+    for _, doc in parsed_docs:
         result.append({
             "author": doc.get("author"),
             "from_branch": doc.get("from_branch"),
